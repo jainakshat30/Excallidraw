@@ -45,6 +45,12 @@ importers:
       '@types/express':
         specifier: ^5.0.0
         version: 5.0.0
+      '@types/express-serve-static-core':
+        specifier: ^5.0.6
+        version: 5.0.6
+      '@types/serve-static':
+        specifier: ^1.15.7
+        version: 1.15.7
 
   apps/web:
     dependencies:

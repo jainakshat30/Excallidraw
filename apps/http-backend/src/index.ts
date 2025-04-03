@@ -6,29 +6,28 @@ import { CreateUserSchema, SigninSchema, CreateRoomSchema } from "@repo/common/t
 import { prismaClient } from "@repo/db/client"
 
 const app = express();
+app.use(express.json());
 
-app.post("/signup",(req,res)=>{
+app.post("/signup", async (req, res) => {
     const parsedData = CreateUserSchema.safeParse(req.body);
     if(!parsedData.success){
         res.status(400).json({message:"Invalid request"});
         
-return;
-}
-try {
-    await prismaClient.user.create({
+    return;
+    }
+    try {
+        await prismaClient.user.create({
         data: {
             email: parsedData.data?.username,
             password: parsedData.data?.password,
             name : parsedData.data?.name
         }
-        
-
     })
-    res.json({
+        res.json({
         userd: 123
     })
-}catch(e){
-    res.status(411).json({
+    }catch(e){
+        res.status(411).json({
         message: "Error creating user"
     })
 }
