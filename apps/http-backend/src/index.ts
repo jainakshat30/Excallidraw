@@ -16,7 +16,7 @@ app.post("/signup", async (req, res) => {
     return;
     }
     try {
-        await prismaClient.user.create({
+        const user = await prismaClient.user.create({
         data: {
             email: parsedData.data?.username,
             password: parsedData.data?.password,
@@ -24,27 +24,43 @@ app.post("/signup", async (req, res) => {
         }
     })
         res.json({
-        userd: 123
+        userId: user.id
     })
     }catch(e){
         res.status(411).json({
-        message: "Error creating user"
+        message: "User already exist with this username"
     })
 }
     
 })
 
-app.post("/signin",(req,res)=>{
+app.post("/signin", async (req,res)=>{
 
-    const data = SigninSchema.safeParse(req.body);
-    if(!data.success){
-        res.status(400).json({message:"Invalid request"});
+    const parsedData = SigninSchema.safeParse(req.body);
+    if(!parsedData.success){
+        res.status(400).json({
+            message:"Invalid request"
+        });
         
         return;
     }
-    const userId = 1;
+
+    const user = await prismaClient.user.findFirst({
+        where: {
+            email: parsedData.data?.username,
+            password : parsedData.data?.password
+            }
+    })
+
+    if(!user){
+        res.status(400).json({
+            message : "Not Authorised"
+        })
+        return;
+    }
+
     const token = jwt.sign({
-        userId
+        userId : user?.id
     },JWT_SECRET)
 
     res.json({
@@ -52,16 +68,33 @@ app.post("/signin",(req,res)=>{
     })
 })
 
-app.post("/room",middleware,(req,res)=>{
-
-    const data = CreateRoomSchema.safeParse(req.body);
-    if(!data.success){
-        res.status(400).json({message:"Invalid request"});
-       
+app.post("/room", middleware, async (req, res) => {
+    const parsedData = CreateRoomSchema.safeParse(req.body);
+    if (!parsedData.success) {
+        res.json({
+            message: "Incorrect inputs"
+        })
         return;
     }
-    res.json({
-        roomId : 123
-    })
+    // @ts-ignore: TODO: Fix this
+    const userId = req.userId as string;
+
+    try {
+        const room = await prismaClient.room.create({
+            data: {
+                slug: parsedData.data.name,
+                adminId: userId 
+            }
+        })
+
+        res.json({
+            roomId: room.id
+        })
+    } catch(e) {
+        res.status(411).json({
+            message: "Room already exists with this name"
+        })
+    }
 })
+
 app.listen(3001);
